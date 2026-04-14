@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI ONE ポイント申請ログ・ジェネレーター</title>
+  <link rel="stylesheet" href="index.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="app-container">
+    <header>
+      <h1>AI ONE 実践報告用フォーム</h1>
+      <p class="subtitle">実績報告用テキスト生成ツール</p>
+    </header>
+
+    <main>
+      <form id="applicationForm">
+        <div class="form-group">
+          <label for="userName">お名前（フルネーム）<span class="required">*</span></label>
+          <input type="text" id="userName" name="userName" placeholder="AI太郎" required>
+        </div>
+
+        <div class="form-group">
+          <label for="category">申請項目<span class="required">*</span></label>
+          <div class="custom-select-wrapper">
+             <select id="category" name="category" required>
+                <option value="">選択してください</option>
+                <option value="案件応募">案件応募（実践報告）</option>
+                <option value="案件受注">案件受注（実践報告）</option>
+                <option value="マネタイズ報告">マネタイズ報告（実践報告）</option>
+                <option value="LINEスタンプ制作">LINEスタンプ制作（実践報告）</option>
+                <option value="その他">その他（学習報告など）</option>
+             </select>
+          </div>
+        </div>
+
+        <div class="form-group" id="aiFieldGroup">
+          <label>使用したAI<span class="required">*</span> <span class="ai-note" id="aiNote">※実践報告では必須項目です！</span></label>
+          <div class="checkbox-group-wrapper" id="usedAIGroup">
+            <label class="custom-checkbox">
+              <input type="checkbox" name="usedAI" value="ChatGPT">
+              <span class="checkmark"></span>
+              <span class="label-text">ChatGPT</span>
+            </label>
+            <label class="custom-checkbox">
+              <input type="checkbox" name="usedAI" value="Gemini">
+              <span class="checkmark"></span>
+              <span class="label-text">Gemini</span>
+            </label>
+            <label class="custom-checkbox">
+              <input type="checkbox" name="usedAI" value="Claude">
+              <span class="checkmark"></span>
+              <span class="label-text">Claude</span>
+            </label>
+            <label class="custom-checkbox">
+              <input type="checkbox" name="usedAI" value="Claude Code">
+              <span class="checkmark"></span>
+              <span class="label-text">Claude Code</span>
+            </label>
+            <label class="custom-checkbox">
+              <input type="checkbox" name="usedAI" value="Antigravity">
+              <span class="checkmark"></span>
+              <span class="label-text">Antigravity</span>
+            </label>
+            <label class="custom-checkbox">
+              <input type="checkbox" name="usedAI" value="その他" id="aiOtherCheck">
+              <span class="checkmark"></span>
+              <span class="label-text">その他</span>
+            </label>
+          </div>
+          <input type="text" id="usedAIOtherText" class="hidden" placeholder="Canva, Genspark などを入力してください" style="margin-top: 10px;">
+        </div>
+
+        <div id="dynamicSpecificFields" class="hidden">
+          <div class="form-group" id="countGroup">
+            <label for="appCount">本日の応募件数<span class="required">*</span></label>
+            <input type="number" id="appCount" min="1" placeholder="例：3" style="width: 100%; padding: 14px 16px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 10px; color: var(--white); outline: none;">
+          </div>
+          <div class="form-group" id="categoryGroup">
+            <label id="categoryGroupLabel">案件カテゴリ<span class="required">*</span></label>
+            <div class="checkbox-group-wrapper">
+              <label class="custom-checkbox"><input type="checkbox" name="appCategory" value="ライティング"><span class="checkmark"></span><span class="label-text">ライティング</span></label>
+              <label class="custom-checkbox"><input type="checkbox" name="appCategory" value="画像編集・デザイン"><span class="checkmark"></span><span class="label-text">画像編集・デザイン</span></label>
+              <label class="custom-checkbox"><input type="checkbox" name="appCategory" value="業務効率化"><span class="checkmark"></span><span class="label-text">業務効率化</span></label>
+              <label class="custom-checkbox"><input type="checkbox" name="appCategory" value="動画編集"><span class="checkmark"></span><span class="label-text">動画編集</span></label>
+              <label class="custom-checkbox"><input type="checkbox" name="appCategory" value="AIコンサル"><span class="checkmark"></span><span class="label-text">AIコンサル</span></label>
+              <label class="custom-checkbox"><input type="checkbox" name="appCategory" value="その他" id="appCategoryOtherCheck"><span class="checkmark"></span><span class="label-text">その他</span></label>
+            </div>
+            <input type="text" id="appCategoryOtherText" class="hidden" placeholder="カテゴリ名をご記入ください" style="margin-top: 10px; width: 100%; padding: 14px 16px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 10px; color: var(--white); outline: none;">
+          </div>
+          <div class="form-group" id="platformGroup">
+            <label id="platformGroupLabel">応募媒体<span class="required">*</span></label>
+            <div class="checkbox-group-wrapper">
+              <label class="custom-checkbox"><input type="checkbox" name="appPlatform" value="クラウドワークス"><span class="checkmark"></span><span class="label-text">クラウドワークス</span></label>
+              <label class="custom-checkbox"><input type="checkbox" name="appPlatform" value="ランサーズ"><span class="checkmark"></span><span class="label-text">ランサーズ</span></label>
+              <label class="custom-checkbox"><input type="checkbox" name="appPlatform" value="ココナラ"><span class="checkmark"></span><span class="label-text">ココナラ</span></label>
+              <label class="custom-checkbox"><input type="checkbox" name="appPlatform" value="その他" id="appPlatformOtherCheck"><span class="checkmark"></span><span class="label-text">その他</span></label>
+            </div>
+            <input type="text" id="appPlatformOtherText" class="hidden" placeholder="媒体名をご記入ください" style="margin-top: 10px; width: 100%; padding: 14px 16px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 10px; color: var(--white); outline: none;">
+          </div>
+          <div class="form-group" id="amountGroup">
+            <label id="amountGroupLabel">受注金額：（非公開でもOK）</label>
+            <input type="text" id="appAmount" placeholder="例：10,000円、非公開など" style="width: 100%; padding: 14px 16px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 10px; color: var(--white); outline: none;">
+          </div>
+        </div>
+
+        <div id="lineStampSpecificFields" class="hidden">
+          <div class="form-group">
+            <label for="stampTheme">スタンプのテーマ・コンセプト<span class="required">*</span></label>
+            <textarea id="stampTheme" rows="2" placeholder="テーマやコンセプトをご記入ください" style="width: 100%; padding: 14px 16px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 10px; color: var(--white); outline: none; resize: vertical;"></textarea>
+          </div>
+          <div class="form-group">
+            <label for="stampImpression">作成してみての感想・工夫した点<span class="required">*</span></label>
+            <textarea id="stampImpression" rows="3" placeholder="感想や工夫した点をご記入ください" style="width: 100%; padding: 14px 16px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 10px; color: var(--white); outline: none; resize: vertical;"></textarea>
+          </div>
+          <div class="form-group">
+            <label for="stampMessage">これからチャレンジする方へひとこと<span class="required">*</span></label>
+            <textarea id="stampMessage" rows="2" placeholder="ひとことメッセージをご記入ください" style="width: 100%; padding: 14px 16px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 10px; color: var(--white); outline: none; resize: vertical;"></textarea>
+          </div>
+        </div>
+
+        <div class="form-group dynamic-detail" id="detailsGroup">
+          <label for="details" id="detailsLabel">詳細情報（案件の場合は「媒体」、マネタイズは「場所」など）<span class="required">*</span></label>
+          <textarea id="details" name="details" rows="8" placeholder="媒体名、場所、またはその他の自由記述をご記入ください"></textarea>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" id="generateBtn" class="btn-primary">
+            <span>コピペ用のテキストを生成</span>
+            <div class="spinner loader-hidden" id="loader"></div>
+          </button>
+        </div>
+      </form>
+
+      <div class="output-section hidden" id="outputSection">
+        <h2>生成されたテキスト</h2>
+        <p class="instruction-text">以下のテキストをコピーし、<strong class="highlight-screenshot">スクリーンショットを添付して</strong>「AI ONEメイングループオープンチャット」にアウトプットしてください。</p>
+        <div class="textarea-wrapper">
+          <textarea id="outputText" readonly rows="8"></textarea>
+          <button id="copyBtn" class="btn-secondary" title="クリップボードにコピー">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+            コピーする
+          </button>
+        </div>
+      </div>
+    </main>
+  </div>
+  
+  <div class="toast-notification hidden" id="toast"></div>
+
+  <script src="main.js"></script>
+</body>
+</html>
