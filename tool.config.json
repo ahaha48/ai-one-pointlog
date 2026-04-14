@@ -1,10 +1,10 @@
 {
   "$schema": "https://one-group.com/schemas/tool-config.json",
-  "name": "ツール名を入力してください",
-  "slug": "tool-slug",
-  "description": "ツールの説明を入力してください",
+  "name": "AI ONE 実践報告フォーム",
+  "slug": "aione-point-log",
+  "description": "実績報告用テキスト生成ツール。案件応募・受注・マネタイズ報告などのアウトプットテキストをワンクリックで生成できます。",
   "version": "1.0.0",
-  "author": "あなたの名前",
+  "author": "ONE-content",
   "price": 0,
   "category": "AI",
   "requiredAuth": true
