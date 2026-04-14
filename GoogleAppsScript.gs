@@ -1,26 +1,28 @@
 /**
  * AI ONE ポイント申請ログ・ジェネレーター用
- * Google Apps Script (GAS) テンプレート
- * 
+ * Google Apps Script (GAS)
+ *
  * =====================================
  * 準備・設定手順：
  * =====================================
- * 1. Googleスプレッドシートを新規作成し、シート名を「ログ一覧」などに適宜変更します。（デフォルトは「シート1」）
- * 2. スプレッドシートの1行目を以下のヘッダーとして設定してください。
+ * 1. https://script.google.com/ にアクセスして「新しいプロジェクト」を作成します。
+ * 2. エディタのコードを全て消去し、このファイルの内容を貼り付けて保存します（Ctrl+S）。
+ * 3. スプレッドシートの1行目に以下のヘッダーが設定されていることを確認してください。
  *    ・A1: タイムスタンプ
  *    ・B1: お名前
- *    ・C1: 使用AI  <-- ※ご要望の通り、左から3番目に配置しています！アナリティクス確認用。
+ *    ・C1: 使用AI
  *    ・D1: 申請項目
  *    ・E1: 詳細情報
- * 3. スプレッドシート上部のメニューから [拡張機能] > [Apps Script] を開きます。
- * 4. エディタに記述されている元のコードを全て消去し、このファイルの内容を貼り付けて保存します。
- * 5. 以下の「SHEET_NAME」を、1で設定したシート名に変更してください。
- * 6. 画面右上の [デプロイ] > [新しいデプロイ] をクリックします。
+ * 4. 画面右上の [デプロイ] > [新しいデプロイ] をクリックします。
  *    - 種類の選択: 「ウェブアプリ」の歯車アイコンをクリック
+ *    - 次のユーザーとして実行: 「自分」
  *    - アクセスできるユーザー: 「全員」に設定して「デプロイ」を実行
- * 7. 発行された「ウェブアプリのURL」をコピーし、
- *    Webアプリ側の main.js にある `GAS_WEBAPP_URL` 変数に貼り付けてください。
+ * 5. 発行された「ウェブアプリのURL」をコピーし、
+ *    page.tsx の GAS_WEBAPP_URL 変数に貼り付けてください。
  */
+
+// ▼▼▼ 保存先スプレッドシートのID（URLの /d/ 以降、/edit より前の部分）▼▼▼
+const SPREADSHEET_ID = '1KgIPEwiqWTRgpEmo-0H0DEDpseR46fF8Njn6cedvHHw';
 
 // ▼▼▼ シート名をここに入力 ▼▼▼
 const SHEET_NAME = 'シート1';
@@ -28,18 +30,17 @@ const SHEET_NAME = 'シート1';
 function doPost(e) {
   try {
     // Webアプリから送られたデータを取得
-    // 安全で確実なアプリケーションフォーム送信対応
     const payloadStr = (e.parameter && e.parameter.payload) ? e.parameter.payload : e.postData.contents;
     const data = JSON.parse(payloadStr);
-    
+
     const timestamp = new Date();
     const userName = data.userName || '';
     const usedAI = data.usedAI || '';
     const category = data.category || '';
     const details = data.details || '';
-    
-    // スプレッドシートのシートを取得
-    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_NAME);
+
+    // IDで直接スプレッドシートを取得（スタンドアロンスクリプト対応）
+    const sheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(SHEET_NAME);
     if (!sheet) {
       throw new Error(`シート「${SHEET_NAME}」が見つかりませんでした。設定を確認してください。`);
     }
