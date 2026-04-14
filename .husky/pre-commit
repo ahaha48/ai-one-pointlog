@@ -1,0 +1,12 @@
+#!/usr/bin/env sh
+
+# package.jsonが変更された場合、package-lock.jsonも一緒にコミットされているかチェック
+if git diff --cached --name-only | grep -q "^package\.json$"; then
+  if ! git diff --cached --name-only | grep -q "^package-lock\.json$"; then
+    echo ""
+    echo "ERROR: package.json is staged but package-lock.json is not."
+    echo "Run 'npm install' to update package-lock.json, then stage it."
+    echo ""
+    exit 1
+  fi
+fi

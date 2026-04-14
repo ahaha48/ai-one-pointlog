@@ -1,0 +1,11 @@
+{
+  "$schema": "https://one-group.com/schemas/tool-config.json",
+  "name": "ツール名を入力してください",
+  "slug": "tool-slug",
+  "description": "ツールの説明を入力してください",
+  "version": "1.0.0",
+  "author": "あなたの名前",
+  "price": 0,
+  "category": "AI",
+  "requiredAuth": true
+}
