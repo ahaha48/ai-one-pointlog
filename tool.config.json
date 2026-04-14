@@ -7,5 +7,5 @@
   "author": "ONE-content",
   "price": 0,
   "category": "AI",
-  "requiredAuth": true
+  "requiredAuth": false
 }
