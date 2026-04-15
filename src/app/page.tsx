@@ -62,6 +62,7 @@ export default function HomePage() {
   const [appCount, setAppCount] = useState("");
   const [appAmount, setAppAmount] = useState("");
   const [details, setDetails] = useState("");
+  const [aiUsageDetail, setAiUsageDetail] = useState("");
 
   // LINEスタンプ用
   const [stampTheme, setStampTheme] = useState("");
@@ -91,6 +92,7 @@ export default function HomePage() {
     setAppCount("");
     setAppAmount("");
     setDetails("");
+    setAiUsageDetail("");
     setStampTheme("");
     setStampImpression("");
     setStampMessage("");
@@ -185,6 +187,11 @@ export default function HomePage() {
       return;
     }
 
+    if ((category === "案件受注" || category === "マネタイズ報告") && aiUsageDetail.trim().length < 30) {
+      showToast("AIの活用方法は30文字以上で具体的にご記入ください。");
+      return;
+    }
+
     if (aiGroup.checked.includes("その他") && !aiGroup.otherText) {
       showToast("その他のAI名をご記入ください。");
       return;
@@ -221,11 +228,11 @@ export default function HomePage() {
         formattedText = `📩【応募報告】\n▷ 本日の応募件数：${appCount}\n▷ 案件カテゴリ：${appCat}\n▷ 応募媒体：${appPlat}\n▷ 使用AI：${usedAI}\n▷ ひとこと：${details}`;
         gasDetails = `応募件数: ${appCount}\nカテゴリ: ${appCat}\n媒体: ${appPlat}\nひとこと: ${details}`;
       } else if (category === "案件受注") {
-        formattedText = `📩【案件受注報告】\n▷ 案件カテゴリ：${appCat}\n▷ 受注媒体：${appPlat}\n▷ 受注金額：${appAmount || "非公開"}\n▷ 使用AI：${usedAI}\n▷ ひとこと：${details}`;
-        gasDetails = `カテゴリ: ${appCat}\n媒体: ${appPlat}\n受注金額: ${appAmount || "非公開"}\nひとこと: ${details}`;
+        formattedText = `📩【案件受注報告】\n▷ 案件カテゴリ：${appCat}\n▷ 受注媒体：${appPlat}\n▷ 受注金額：${appAmount || "非公開"}\n▷ 使用AI：${usedAI}\n▷ AIの活用方法：${aiUsageDetail}\n▷ ひとこと：${details}`;
+        gasDetails = `カテゴリ: ${appCat}\n媒体: ${appPlat}\n受注金額: ${appAmount || "非公開"}\nAIの活用方法: ${aiUsageDetail}\nひとこと: ${details}`;
       } else if (category === "マネタイズ報告") {
-        formattedText = `📩【マネタイズ報告】\n▷ 収益カテゴリ：${appCat}\n▷ 媒体：${appPlat}\n▷ 収益金額：${appAmount || "非公開"}\n▷ 使用AI：${usedAI}\n▷ ひとこと：${details}`;
-        gasDetails = `カテゴリ: ${appCat}\n媒体: ${appPlat}\n収益金額: ${appAmount || "非公開"}\nひとこと: ${details}`;
+        formattedText = `📩【マネタイズ報告】\n▷ 収益カテゴリ：${appCat}\n▷ 媒体：${appPlat}\n▷ 収益金額：${appAmount || "非公開"}\n▷ 使用AI：${usedAI}\n▷ AIの活用方法：${aiUsageDetail}\n▷ ひとこと：${details}`;
+        gasDetails = `カテゴリ: ${appCat}\n媒体: ${appPlat}\n収益金額: ${appAmount || "非公開"}\nAIの活用方法: ${aiUsageDetail}\nひとこと: ${details}`;
       } else if (category === "LINEスタンプ制作") {
         const stampDetails = `▷ スタンプのテーマ・コンセプト：\n${stampTheme}\n\n▷ 作成してみての感想・工夫した点：\n${stampImpression}\n\n▷ これからチャレンジする方へひとこと：\n${stampMessage}`;
         formattedText = `📩【LINEスタンプ制作報告】\n●使用AI：${usedAI}\n\n${stampDetails}`;
@@ -244,6 +251,7 @@ export default function HomePage() {
         userName,
         category,
         usedAI,
+        aiUsageDetail: aiUsageDetail || "",
         details: gasDetails,
         timestamp: new Date().toISOString(),
       });
@@ -424,6 +432,36 @@ export default function HomePage() {
                     placeholder="例：10,000円、非公開など"
                     className="w-full rounded-lg border border-white/15 bg-white/5 px-4 py-3.5 text-white placeholder-white/30 outline-none transition focus:border-[#D4AF37] focus:ring-4 focus:ring-[#D4AF37]/15"
                   />
+                </div>
+
+                {/* AIの活用方法 */}
+                <div className="rounded-xl border border-[#D4AF37]/30 bg-[#D4AF37]/5 p-4">
+                  <label className="mb-1 block text-sm font-semibold text-[#D4AF37]">
+                    AIをどのように活用しましたか？<span className="ml-1">*</span>
+                  </label>
+                  <p className="mb-3 text-xs text-white/40">
+                    「AIを使いました」「コピペしました」などの記載は<span className="font-bold text-red-400">NC（ポイント対象外）</span>となります。<br />
+                    どのAIをどう使い、どの部分を自分で工夫して受注につなげたか、具体的に記入してください。
+                  </p>
+                  <textarea
+                    value={aiUsageDetail}
+                    onChange={(e) => setAiUsageDetail(e.target.value)}
+                    rows={4}
+                    placeholder={
+                      category === "案件受注"
+                        ? "例：Claudeで提案書の構成を作成し、クライアントの業種に合わせて自分でカスタマイズ。価格設定の根拠もAIに壁打ちしながら自分の言葉で説明したところ、即決してもらえた。"
+                        : "例：ChatGPTで商品説明文の叩き台を作り、ターゲット層に合わせて文体を自分で調整。SNS投稿のA/Bテストにも活用し、クリック率が2倍になった。"
+                    }
+                    className="w-full resize-y rounded-lg border border-white/15 bg-white/5 px-4 py-3.5 text-white placeholder-white/25 outline-none transition focus:border-[#D4AF37] focus:ring-4 focus:ring-[#D4AF37]/15"
+                  />
+                  <div className="mt-1.5 flex justify-between text-xs">
+                    <span className={aiUsageDetail.trim().length < 30 ? "text-red-400/70" : "text-emerald-400/70"}>
+                      {aiUsageDetail.trim().length < 30
+                        ? `あと ${30 - aiUsageDetail.trim().length} 文字以上必要です`
+                        : "OK"}
+                    </span>
+                    <span className="text-white/25">{aiUsageDetail.trim().length} 文字</span>
+                  </div>
                 </div>
               </>
             )}
