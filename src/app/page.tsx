@@ -440,7 +440,7 @@ export default function HomePage() {
                     AIをどのように活用しましたか？<span className="ml-1">*</span>
                   </label>
                   <p className="mb-3 text-xs text-white/40">
-                    「AIを使いました」「コピペしました」などの記載は<span className="font-bold text-red-400">NC（ポイント対象外）</span>となります。<br />
+                    「AIを使いました」「コピペしました」などの記載は<span className="font-bold text-red-400">NG（ポイント対象外）</span>となります。<br />
                     どのAIをどう使い、どの部分を自分で工夫して受注につなげたか、具体的に記入してください。
                   </p>
                   <textarea
