@@ -9,8 +9,9 @@ const GAS_WEBAPP_URL =
 const AI_OPTIONS = ["ChatGPT", "Gemini", "Claude", "Claude Code", "Antigravity", "その他"] as const;
 const CATEGORY_OPTIONS = ["ライティング", "画像編集・デザイン", "業務効率化", "動画編集", "AIコンサル", "その他"] as const;
 const PLATFORM_OPTIONS = ["クラウドワークス", "ランサーズ", "ココナラ", "その他"] as const;
+const EVENT_OPTIONS = ["オフ会", "合宿"] as const;
 
-type Category = "案件応募" | "案件受注" | "マネタイズ報告" | "LINEスタンプ制作" | "その他" | "";
+type Category = "案件応募" | "案件受注" | "マネタイズ報告" | "LINEスタンプ制作" | "イベント参加" | "その他" | "";
 
 interface LogEntry {
   id: string;
@@ -58,11 +59,13 @@ export default function HomePage() {
   const aiGroup = useCheckboxGroup(AI_OPTIONS);
   const appCategoryGroup = useCheckboxGroup(CATEGORY_OPTIONS);
   const platformGroup = useCheckboxGroup(PLATFORM_OPTIONS);
+  const eventGroup = useCheckboxGroup(EVENT_OPTIONS);
 
   const [appCount, setAppCount] = useState("");
   const [appAmount, setAppAmount] = useState("");
   const [details, setDetails] = useState("");
   const [aiUsageDetail, setAiUsageDetail] = useState("");
+  const [eventImpression, setEventImpression] = useState("");
 
   // LINEスタンプ用
   const [stampTheme, setStampTheme] = useState("");
@@ -89,10 +92,12 @@ export default function HomePage() {
     setCategory(val);
     appCategoryGroup.reset();
     platformGroup.reset();
+    eventGroup.reset();
     setAppCount("");
     setAppAmount("");
     setDetails("");
     setAiUsageDetail("");
+    setEventImpression("");
     setStampTheme("");
     setStampImpression("");
     setStampMessage("");
@@ -172,6 +177,15 @@ export default function HomePage() {
         showToast("スタンプのすべての詳細項目を入力してください。");
         return;
       }
+    } else if (category === "イベント参加") {
+      if (!eventGroup.getValue()) {
+        showToast("オフ会・合宿のどちらかを選択してください。");
+        return;
+      }
+      if (eventImpression.trim().length < 100) {
+        showToast("学び・感想は100文字以上ご記入ください。");
+        return;
+      }
     } else if (!details) {
       showToast("詳細情報を入力してください。");
       return;
@@ -208,12 +222,14 @@ export default function HomePage() {
       }
     }
 
-    if (isPractical && !usedAI) {
-      showToast("AI ONEの実践報告には、使用したAIの選択が必須です！");
-      return;
-    } else if (!usedAI) {
-      showToast("使用したAIを選択してください。");
-      return;
+    if (category !== "イベント参加") {
+      if (isPractical && !usedAI) {
+        showToast("AI ONEの実践報告には、使用したAIの選択が必須です！");
+        return;
+      } else if (!usedAI) {
+        showToast("使用したAIを選択してください。");
+        return;
+      }
     }
 
     setLoading(true);
@@ -237,6 +253,10 @@ export default function HomePage() {
         const stampDetails = `▷ スタンプのテーマ・コンセプト：\n${stampTheme}\n\n▷ 作成してみての感想・工夫した点：\n${stampImpression}\n\n▷ これからチャレンジする方へひとこと：\n${stampMessage}`;
         formattedText = `📩【LINEスタンプ制作報告】\n●使用AI：${usedAI}\n\n${stampDetails}`;
         gasDetails = stampDetails;
+      } else if (category === "イベント参加") {
+        const eventType = eventGroup.getValue();
+        formattedText = `📩【イベント参加報告】\n▷ 参加イベント：${eventType}\n▷ 学び・感想：\n${eventImpression}`;
+        gasDetails = `参加イベント: ${eventType}\n学び・感想: ${eventImpression}`;
       } else {
         const titleCategory = category.endsWith("報告") ? category : category + "報告";
         formattedText = `【${titleCategory}】\n●使用AI：${usedAI}\n●詳細・感想：\n${details}`;
@@ -250,7 +270,7 @@ export default function HomePage() {
       await saveLog({
         userName,
         category,
-        usedAI,
+        usedAI: category === "イベント参加" ? "" : usedAI,
         aiUsageDetail: aiUsageDetail || "",
         details: gasDetails,
         timestamp: new Date().toISOString(),
@@ -333,13 +353,14 @@ export default function HomePage() {
                   <option value="案件受注">案件受注（実践報告）</option>
                   <option value="マネタイズ報告">マネタイズ報告（実践報告）</option>
                   <option value="LINEスタンプ制作">LINEスタンプ制作（実践報告）</option>
+                  <option value="イベント参加">イベント参加（学習報告）</option>
                   <option value="その他">その他（学習報告など）</option>
                 </select>
               </div>
             </div>
 
             {/* 使用AI */}
-            {category && (
+            {category && category !== "イベント参加" && (
               <div className={isPractical ? "rounded-lg border border-red-500/40 bg-red-500/5 p-3" : ""}>
                 <label className={`mb-1.5 block text-sm font-medium ${isPractical ? "text-red-200" : "text-white"}`}>
                   使用したAI<span className="ml-1 text-[#D4AF37]">*</span>
@@ -508,8 +529,49 @@ export default function HomePage() {
               </>
             )}
 
-            {/* 詳細情報（LINEスタンプ以外） */}
-            {category && category !== "LINEスタンプ制作" && (
+            {/* イベント参加 固有フィールド */}
+            {category === "イベント参加" && (
+              <>
+                <div>
+                  <label className="mb-1.5 block text-sm font-medium text-white">
+                    参加イベント<span className="ml-1 text-[#D4AF37]">*</span>
+                  </label>
+                  <div className="flex gap-3">
+                    {EVENT_OPTIONS.map((ev) => (
+                      <CheckboxChip
+                        key={ev}
+                        label={ev}
+                        checked={eventGroup.checked.includes(ev)}
+                        onChange={() => eventGroup.toggle(ev)}
+                      />
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <label className="mb-1.5 block text-sm font-medium text-white">
+                    学び・感想<span className="ml-1 text-[#D4AF37]">*</span>
+                  </label>
+                  <textarea
+                    value={eventImpression}
+                    onChange={(e) => setEventImpression(e.target.value)}
+                    rows={5}
+                    placeholder="イベントで学んだことや感想を具体的にご記入ください。"
+                    className="w-full resize-y rounded-lg border border-white/15 bg-white/5 px-4 py-3.5 text-white placeholder-white/30 outline-none transition focus:border-[#D4AF37] focus:ring-4 focus:ring-[#D4AF37]/15"
+                  />
+                  <div className="mt-1.5 flex justify-between text-xs">
+                    <span className={eventImpression.trim().length < 100 ? "text-red-400/70" : "text-emerald-400/70"}>
+                      {eventImpression.trim().length < 100
+                        ? `あと ${100 - eventImpression.trim().length} 文字以上必要です`
+                        : "OK"}
+                    </span>
+                    <span className="text-white/25">{eventImpression.trim().length} 文字</span>
+                  </div>
+                </div>
+              </>
+            )}
+
+            {/* 詳細情報（LINEスタンプ・イベント参加以外） */}
+            {category && category !== "LINEスタンプ制作" && category !== "イベント参加" && (
               <div>
                 <label className="mb-1.5 block text-sm font-medium text-white">
                   {getDetailsLabel()}<span className="ml-1 text-[#D4AF37]">*</span>
