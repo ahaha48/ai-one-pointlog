@@ -143,7 +143,7 @@ async function syncToApi<T extends DataItem>(
  * ```
  */
 export const resilientData = {
-  /** データ検索（API + localStorage マージ） */
+  /** データ検索（API優先、localStorage は _unsynced アイテムのみ補完） */
   find: async <T extends DataItem>(
     collection: string,
     options?: FindOptions,
@@ -151,27 +151,46 @@ export const resilientData = {
     const localItems = loadLocal<T>(collection);
 
     try {
-      const result = await toolData.find<T>(collection, options);
+      // ページネーションで取り漏れが出ないよう limit を大きく設定
+      const fetchOptions: FindOptions = { ...options, limit: options?.limit ?? 10000 };
+      const result = await toolData.find<T>(collection, fetchOptions);
       const apiItems = result.data || [];
+      const apiIds = new Set(apiItems.map((item) => String(item.id)));
 
-      const { merged, unsynced } = mergeByID(apiItems, localItems);
+      // localStorage から _unsynced:true のアイテムのみ残す
+      // （ページネーション問題や重複を防ぐため、それ以外のローカルアイテムは破棄）
+      const unsyncedItems = localItems.filter(
+        (item) =>
+          (item as { _unsynced?: boolean })._unsynced === true &&
+          !apiIds.has(String(item.id)),
+      );
 
-      let filtered = merged;
-      if (options?.where) {
-        filtered = merged.filter((item) => {
-          return Object.entries(options.where!).every(
-            ([key, value]) => item[key] === value,
-          );
+      // 同期前に localStorage から _unsynced アイテムを削除する
+      // （リロード中断による二重同期を防ぐ）
+      saveLocal(collection, apiItems);
+
+      if (unsyncedItems.length > 0) {
+        syncToApi(collection, unsyncedItems).catch(() => {
+          // 同期失敗時は _unsynced アイテムを localStorage に戻す
+          const current = loadLocal<T>(collection);
+          const currentIds = new Set(current.map((i) => String(i.id)));
+          const failedItems = unsyncedItems.filter((i) => !currentIds.has(String(i.id)));
+          if (failedItems.length > 0) {
+            saveLocal(collection, [...current, ...failedItems]);
+          }
         });
       }
 
-      saveLocal(collection, merged);
+      const merged = [...apiItems, ...unsyncedItems];
 
-      if (unsynced.length > 0) {
-        syncToApi(collection, unsynced).catch(() => {});
+      if (options?.where) {
+        return merged.filter((item) =>
+          Object.entries(options.where!).every(
+            ([key, value]) => item[key] === value,
+          ),
+        );
       }
-
-      return filtered;
+      return merged;
     } catch {
       if (options?.where) {
         return localItems.filter((item) =>
