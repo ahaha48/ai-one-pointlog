@@ -90,7 +90,11 @@ function mergeByID<T extends DataItem>(
     const id = String(item.id);
     if (!mergedMap.has(id)) {
       mergedMap.set(id, item);
-      unsynced.push(item);
+      // _unsynced フラグがある場合のみ API への同期対象とする
+      // （ページネーションで取得されなかったアイテムを誤って重複作成しないため）
+      if ((item as { _unsynced?: boolean })._unsynced === true) {
+        unsynced.push(item);
+      }
     }
   }
 
