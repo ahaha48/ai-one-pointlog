@@ -108,7 +108,12 @@ async function syncToApi<T extends DataItem>(
         updated_at?: string;
         _unsynced?: boolean;
       };
-      await toolData.create(collection, data as Record<string, unknown>);
+      const result = await toolData.create<T>(collection, data as Record<string, unknown>);
+      // ローカルの仮IDを削除し、サーバーから返ってきた正式IDに置き換える
+      const localItems = loadLocal<T>(collection);
+      const replaced = localItems.filter((i) => String(i.id) !== String(id));
+      replaced.push(result.data);
+      saveLocal(collection, replaced);
     } catch {
       console.warn(
         `[resilient-data] 未同期データの同期失敗: ${collection}/${item.id}`,
