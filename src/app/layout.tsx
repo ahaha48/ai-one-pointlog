@@ -7,6 +7,7 @@ import toolConfig from "../../tool.config.json";
 export const metadata: Metadata = {
   title: toolConfig.name,
   description: toolConfig.description,
+  robots: { index: false, follow: false },
 };
 
 export default function RootLayout({

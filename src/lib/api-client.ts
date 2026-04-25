@@ -21,10 +21,12 @@ async function fetchApi<T>(path: string, options?: RequestInit): Promise<T> {
   });
 
   if (response.status === 401) {
-    if (typeof window !== "undefined") {
-      const { redirectToLogin } = await import("./auth");
-      redirectToLogin();
-    }
+    // 暫定対応(2026-04-26): 生徒周知前のため、401でログイン強制リダイレクトを無効化。
+    // 周知完了後にコメント解除すること。
+    // if (typeof window !== "undefined") {
+    //   const { redirectToLogin } = await import("./auth");
+    //   redirectToLogin();
+    // }
     throw new Error("認証が必要です");
   }
 
