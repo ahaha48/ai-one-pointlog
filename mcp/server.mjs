@@ -1,12 +1,37 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
-import { readFileSync } from "node:fs";
+import { readFileSync, existsSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PROJECT_ROOT = join(__dirname, "..");
+
+// `.env.local` を Node プロセスで読み込む（MCPサーバーは標準では .env.local を読まないため）。
+// 既に process.env に値があれば優先する（.claude/settings.json の env や shell export を尊重）。
+function loadEnvLocal() {
+  const envPath = join(PROJECT_ROOT, ".env.local");
+  if (!existsSync(envPath)) return;
+  const content = readFileSync(envPath, "utf-8");
+  for (const rawLine of content.split("\n")) {
+    let line = rawLine.trim();
+    if (!line || line.startsWith("#")) continue;
+    if (line.startsWith("export ")) line = line.slice(7).trim();
+    const eqIndex = line.indexOf("=");
+    if (eqIndex === -1) continue;
+    const key = line.slice(0, eqIndex).trim();
+    let value = line.slice(eqIndex + 1).trim();
+    if ((value.startsWith('"') && value.endsWith('"')) ||
+        (value.startsWith("'") && value.endsWith("'"))) {
+      value = value.slice(1, -1);
+    }
+    if (key && process.env[key] === undefined) {
+      process.env[key] = value;
+    }
+  }
+}
+loadEnvLocal();
 
 // tool.config.json からツール情報を自動読み取り
 function loadToolConfig() {
@@ -27,13 +52,17 @@ const TOOL_ID = process.env.TOOL_ID || toolConfig.slug;
 
 // API呼び出しヘルパー
 // Note: MCPサーバーはサーバーサイドで動作するため、ブラウザのCognito認証は使えない。
-// toolData APIはCORS制限のみ（Bearer認証なし）のため、MCPからの直接アクセスが可能。
+// 中央 tool_data API は Cognito ID Token (Bearer) 認証必須に移行済。
+// `.env.local` に ONE_GROUP_BEARER_TOKEN として user 自身の ID Token を export して使う。
+// 1時間TTL → 期限切れ時は再ログインしてトークンを更新する（README参照）。
 async function callApi(method, path, body) {
   const url = `${API_BASE_URL}${path}`;
-  const options = {
-    method,
-    headers: { "Content-Type": "application/json" },
-  };
+  const headers = { "Content-Type": "application/json" };
+  const bearerToken = process.env.ONE_GROUP_BEARER_TOKEN;
+  if (bearerToken) {
+    headers.Authorization = `Bearer ${bearerToken}`;
+  }
+  const options = { method, headers };
   if (body && (method === "POST" || method === "PUT" || method === "PATCH")) {
     options.body = JSON.stringify(body);
   }
@@ -146,16 +175,30 @@ server.tool(
     // よく使われるコレクション名を試行して存在チェック
     const commonNames = ["items", "funnels", "tasks", "actions", "listings", "reports", "settings", "users", "images", "videos", "messages"];
     const found = [];
+    let authFailed = false;
 
     for (const name of commonNames) {
       try {
         const result = await callApi("GET", `/tools/${TOOL_ID}/data/${name}?limit=1`);
+        if (result.status === 401 || result.status === 403) {
+          authFailed = true;
+          break;
+        }
         if (result.status === 200 && result.data?.success) {
           found.push({ name, count: result.data.meta?.totalCount ?? "?" });
         }
       } catch {
         // skip
       }
+    }
+
+    if (authFailed) {
+      return {
+        content: [{
+          type: "text",
+          text: `## 認証エラー（401/403）\n\n中央 \`tool_data\` API の認証に失敗しました。\n\n環境変数 \`ONE_GROUP_BEARER_TOKEN\` が未設定または期限切れの可能性があります。\n\n### 対処\n1. https://tools.aione.co.jp/ にブラウザで再ログイン\n2. DevTools → Application → Cookies → \`one_id_token\` の値をコピー\n3. プロジェクトルートの \`.env.local\` の \`ONE_GROUP_BEARER_TOKEN=...\` を更新\n4. Claude Code または MCP プロセスを再起動\n\n詳細は README の「Bearer Token の設定」を参照してください。`,
+        }],
+      };
     }
 
     if (found.length === 0) {

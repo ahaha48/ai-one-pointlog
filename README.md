@@ -153,3 +153,61 @@ src/
 - 新しいパッケージを使いたい → 管理者に相談してください
 - データの保存方法がわからない → `toolData` の使い方を [docs/DATA_API.md](docs/DATA_API.md) で確認
 - 独自のデータベースを使いたい → **禁止です**。`toolData` を使ってください（理由は [CONTRIBUTING.md](CONTRIBUTING.md) を参照）
+
+
+## MCP（開発支援ツール）の利用
+
+`mcp/server.mjs` は Claude Code 等から本ツールの `tool_data` API を直接操作するための stdio MCP サーバーです。
+
+### Bearer Token の設定（必須）
+
+中央 `tool_data` API は Cognito ID Token (Bearer) 認証必須に移行しました。
+MCP は Node.js プロセスとして動作するためブラウザ Cognito SSO が使えず、user 自身の ID Token を `.env.local` に export して使います。
+
+#### 取得手順
+1. https://tools.aione.co.jp/ にブラウザで Cognito SSO ログイン（自分のアカウント）
+2. ブラウザ DevTools を開く（Cmd+Opt+I / F12）
+3. **Application** タブ → **Cookies** → `https://tools.aione.co.jp` を選択
+4. `one_id_token` の **Value** をコピー（とても長い文字列）
+5. プロジェクトルートの `.env.local` に下記の形式で貼り付け（クォート不要、1行）:
+
+```bash
+ONE_GROUP_BEARER_TOKEN=eyJraWQiOiJ...（コピーした長い文字列）
+```
+
+> **動作の仕組み:** MCP サーバーは起動時に `mcp/server.mjs` がプロジェクトルートの `.env.local` を読み込み、`process.env.ONE_GROUP_BEARER_TOKEN` に値を注入します。
+> 既存の shell 環境変数や `.claude/settings.json` の `mcpServers.*.env` 設定が優先されます。
+
+#### TTL と再取得
+- ID Token の有効期限は **1時間**
+- MCP 実行時に `401 Unauthorized` が返ったら、ブラウザで再ログインして上記手順を繰り返し `.env.local` を更新
+- `.env.local` 編集後、Claude Code を再起動するか MCP プロセスを再起動して反映
+
+#### 代替手段: `.claude/settings.json` で直接指定
+`.env.local` を使わず、Claude Code の `.claude/settings.json` で MCP サーバー起動時に env を渡すこともできます:
+
+```json
+{
+  "mcpServers": {
+    "tool-dev": {
+      "command": "node",
+      "args": ["mcp/server.mjs"],
+      "env": {
+        "ONE_GROUP_BEARER_TOKEN": "eyJraWQiOiJ..."
+      }
+    }
+  }
+}
+```
+ただし `.claude/settings.json` も誤コミット注意。`.env.local` の方が `.gitignore` 既定で安全です。
+
+#### セキュリティ注意
+- `.env.local` は `.gitignore` 対象。**絶対にコミットしない**
+- ID Token は user 自身の認証情報です。**他人に渡さない**
+- 漏洩した場合は Cognito で即時ログアウト → 再ログインで invalidate
+
+### 動作確認
+```bash
+node mcp/server.mjs
+```
+stdio で起動するため、対話的にテストするには Claude Code 等の MCP クライアントから接続してください。
