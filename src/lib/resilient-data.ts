@@ -5,7 +5,7 @@
  */
 "use client";
 
-import { toolData, api } from "./api-client";
+import { toolData, api, AuthError } from "./api-client";
 import { config } from "./config";
 
 interface AggregateOperation {
@@ -165,7 +165,12 @@ export const resilientData = {
         );
       }
       return apiItems;
-    } catch {
+    } catch (err) {
+      // 暫定対応(2026-04-26): 401時はキャッシュフォールバックを無効化（access control regression 防止）。
+      // 周知完了後・401リダイレクト復元時にこの分岐も削除すること。
+      if (err instanceof AuthError) {
+        return [];
+      }
       // API失敗時のみ localStorage キャッシュにフォールバック
       const localItems = loadLocal<T>(collection);
       if (options?.where) {
@@ -187,7 +192,10 @@ export const resilientData = {
     try {
       const result = await toolData.findById<T>(collection, id);
       return result.data;
-    } catch {
+    } catch (err) {
+      if (err instanceof AuthError) {
+        return null;
+      }
       const localItems = loadLocal<T>(collection);
       return localItems.find((item) => String(item.id) === id) || null;
     }

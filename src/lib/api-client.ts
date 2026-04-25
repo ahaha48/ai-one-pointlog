@@ -6,6 +6,13 @@
 import { getIdToken } from "./auth";
 import { config } from "./config";
 
+export class AuthError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "AuthError";
+  }
+}
+
 /** 基盤APIクライアント */
 async function fetchApi<T>(path: string, options?: RequestInit): Promise<T> {
   const token = await getIdToken();
@@ -27,7 +34,7 @@ async function fetchApi<T>(path: string, options?: RequestInit): Promise<T> {
     //   const { redirectToLogin } = await import("./auth");
     //   redirectToLogin();
     // }
-    throw new Error("認証が必要です");
+    throw new AuthError("認証が必要です");
   }
 
   if (!response.ok) {
