@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { useCollection } from "@/hooks/useCollection";
+import { toolData } from "@/lib/api-client";
 
 const GAS_WEBAPP_URL =
   "https://script.google.com/macros/s/AKfycbw6gAnFX8pthrHcncNqBxw86bHTTBSVZzBHhvOm272Ny7wPdMI4mLuuqeDZ7GOFlw/exec";
@@ -51,8 +51,6 @@ function useCheckboxGroup(options: readonly string[]) {
 }
 
 export default function HomePage() {
-  const { create: saveLog } = useCollection<LogEntry>("point-logs");
-
   const [userName, setUserName] = useState("");
   const [category, setCategory] = useState<Category>("");
 
@@ -233,6 +231,7 @@ export default function HomePage() {
     }
 
     setLoading(true);
+    setShowOutput(false);
 
     try {
       let formattedText = "";
@@ -262,30 +261,32 @@ export default function HomePage() {
         formattedText = `【${titleCategory}】\n●使用AI：${usedAI}\n●詳細・感想：\n${details}`;
       }
 
-      setOutputText(formattedText);
-      setShowOutput(true);
-      showToast("テキストを生成しました！", "success");
+      const submittedAt = new Date().toISOString();
 
-      // ログをアプリ内に保存
-      await saveLog({
+      await toolData.create<LogEntry>("point-logs", {
         userName,
         category,
         usedAI: category === "イベント参加" ? "" : usedAI,
         aiUsageDetail: aiUsageDetail || "",
         details: gasDetails,
-        timestamp: new Date().toISOString(),
+        timestamp: submittedAt,
       });
+
+      setOutputText(formattedText);
+      setShowOutput(true);
+      showToast("テキストを生成しました！", "success");
 
       submitToGas({
         userName,
         category,
         usedAI,
         details: gasDetails,
-        timestamp: new Date().toISOString(),
+        timestamp: submittedAt,
       });
 
-    } catch {
-      showToast("エラーが発生しました。");
+    } catch (error) {
+      console.error("[aione-point-log] form submission failed:", error);
+      showToast("送信に失敗しました。お手数ですが、もう一度送信してください。", "error");
     } finally {
       setTimeout(() => {
         setLoading(false);
