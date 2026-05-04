@@ -189,6 +189,14 @@ export default function HomePage() {
       return;
     }
 
+    if (
+      (category === "案件応募" || category === "案件受注" || category === "マネタイズ報告") &&
+      details.trim().length < 100
+    ) {
+      showToast("ひとことは100文字以上ご記入ください。");
+      return;
+    }
+
     if (category === "案件応募" && (!appCount || !appCategoryGroup.getValue() || !platformGroup.getValue())) {
       showToast("応募件数、カテゴリ、媒体を入力してください。");
       return;
@@ -584,6 +592,16 @@ export default function HomePage() {
                   placeholder={getDetailsPlaceholder()}
                   className="w-full resize-y rounded-lg border border-white/15 bg-white/5 px-4 py-3.5 text-white placeholder-white/30 outline-none transition focus:border-[#D4AF37] focus:ring-4 focus:ring-[#D4AF37]/15"
                 />
+                {(category === "案件応募" || category === "案件受注" || category === "マネタイズ報告") && (
+                  <div className="mt-1.5 flex justify-between text-xs">
+                    <span className={details.trim().length < 100 ? "text-red-400/70" : "text-emerald-400/70"}>
+                      {details.trim().length < 100
+                        ? `あと ${100 - details.trim().length} 文字以上必要です`
+                        : "OK"}
+                    </span>
+                    <span className="text-white/25">{details.trim().length} 文字</span>
+                  </div>
+                )}
               </div>
             )}
 
