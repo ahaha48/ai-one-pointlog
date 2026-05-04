@@ -24,6 +24,33 @@ document.addEventListener('DOMContentLoaded', () => {
   // Check if category is a practical report
   const isPracticalReport = (val) => ['案件応募', '案件受注', 'マネタイズ報告', 'LINEスタンプ制作'].includes(val);
 
+  // ひとこと欄が100文字以上必須となるカテゴリ
+  const requiresLongComment = (val) => ['案件応募', '案件受注', 'マネタイズ報告'].includes(val);
+
+  // ひとこと欄の文字数カウンタ更新
+  const detailsCounter = document.getElementById('detailsCounter');
+  const detailsCounterStatus = document.getElementById('detailsCounterStatus');
+  const detailsCounterCount = document.getElementById('detailsCounterCount');
+  const detailsFieldEl = document.getElementById('details');
+  const updateDetailsCounter = () => {
+    if (!detailsCounter || !detailsFieldEl) return;
+    const len = detailsFieldEl.value.trim().length;
+    if (!requiresLongComment(categorySelect.value)) {
+      detailsCounter.classList.add('hidden');
+      return;
+    }
+    detailsCounter.classList.remove('hidden');
+    detailsCounterCount.textContent = `${len} 文字`;
+    if (len < 100) {
+      detailsCounterStatus.textContent = `あと ${100 - len} 文字以上必要です`;
+      detailsCounterStatus.style.color = 'rgba(248, 113, 113, 0.7)';
+    } else {
+      detailsCounterStatus.textContent = 'OK';
+      detailsCounterStatus.style.color = 'rgba(52, 211, 153, 0.7)';
+    }
+  };
+  if (detailsFieldEl) detailsFieldEl.addEventListener('input', updateDetailsCounter);
+
   categorySelect.addEventListener('change', (e) => {
     const val = e.target.value;
 
@@ -87,6 +114,8 @@ document.addEventListener('DOMContentLoaded', () => {
     } else {
       aiFieldGroup.classList.remove('highlight-field');
     }
+
+    updateDetailsCounter();
   });
 
   // Checkbox group other toggle helper
@@ -188,6 +217,11 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     } else if (!details) {
       showToast('詳細情報を入力してください。');
+      return;
+    }
+
+    if (requiresLongComment(category) && details.length < 100) {
+      showToast('ひとことは100文字以上ご記入ください。');
       return;
     }
 

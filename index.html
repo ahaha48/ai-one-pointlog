@@ -123,6 +123,10 @@
         <div class="form-group dynamic-detail" id="detailsGroup">
           <label for="details" id="detailsLabel">詳細情報（案件の場合は「媒体」、マネタイズは「場所」など）<span class="required">*</span></label>
           <textarea id="details" name="details" rows="8" placeholder="媒体名、場所、またはその他の自由記述をご記入ください"></textarea>
+          <div id="detailsCounter" class="hidden" style="margin-top: 6px; display: flex; justify-content: space-between; font-size: 12px;">
+            <span id="detailsCounterStatus"></span>
+            <span id="detailsCounterCount" style="color: rgba(255,255,255,0.4);"></span>
+          </div>
         </div>
 
         <div class="form-actions">
