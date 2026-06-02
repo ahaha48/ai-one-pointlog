@@ -92,7 +92,7 @@ document.addEventListener('DOMContentLoaded', () => {
       } else {
         categoryGroupLabel.innerHTML = '収益カテゴリ<span class="required">*</span>';
         platformGroupLabel.innerHTML = '媒体（プラットフォーム）<span class="required">*</span>';
-        amountGroupLabel.innerHTML = '収益金額：（非公開でもOK）';
+        amountGroupLabel.innerHTML = '収益金額<span class="required">*</span>';
       }
 
       detailsLabel.innerHTML = 'ひとこと<span class="required">*</span>';
@@ -232,6 +232,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if ((category === '案件受注' || category === 'マネタイズ報告') && (!appCategory || !appPlatform)) {
       showToast('カテゴリと媒体を選択してください。');
+      return;
+    }
+
+    if (category === 'マネタイズ報告' && !appAmount) {
+      showToast('収益金額を入力してください。');
       return;
     }
 

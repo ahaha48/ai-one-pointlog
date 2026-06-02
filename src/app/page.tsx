@@ -126,7 +126,7 @@ export default function HomePage() {
   };
 
   const getAmountLabel = () => {
-    if (category === "マネタイズ報告") return "収益金額：（非公開でもOK）";
+    if (category === "マネタイズ報告") return "収益金額";
     return "受注金額：（非公開でもOK）";
   };
 
@@ -204,6 +204,11 @@ export default function HomePage() {
 
     if ((category === "案件受注" || category === "マネタイズ報告") && (!appCategoryGroup.getValue() || !platformGroup.getValue())) {
       showToast("カテゴリと媒体を選択してください。");
+      return;
+    }
+
+    if (category === "マネタイズ報告" && !appAmount.trim()) {
+      showToast("収益金額を入力してください。");
       return;
     }
 
@@ -454,12 +459,13 @@ export default function HomePage() {
                 <div>
                   <label className="mb-1.5 block text-sm font-medium text-white">
                     {getAmountLabel()}
+                    {category === "マネタイズ報告" && <span className="ml-1 text-red-400">*</span>}
                   </label>
                   <input
                     type="text"
                     value={appAmount}
                     onChange={(e) => setAppAmount(e.target.value)}
-                    placeholder="例：10,000円、非公開など"
+                    placeholder={category === "マネタイズ報告" ? "例：10,000円" : "例：10,000円、非公開など"}
                     className="w-full rounded-lg border border-white/15 bg-white/5 px-4 py-3.5 text-white placeholder-white/30 outline-none transition focus:border-[#D4AF37] focus:ring-4 focus:ring-[#D4AF37]/15"
                   />
                 </div>
